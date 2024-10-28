@@ -1,6 +1,7 @@
 import pytest
 from hypothesis import given
 from hypothesis.strategies import DataObject, data
+import numpy as np
 
 import minitorch
 from minitorch import TensorData
@@ -118,6 +119,45 @@ def test_shape_broadcast() -> None:
 
     c = minitorch.shape_broadcast((2, 5), (5,))
     assert c == (2, 5)
+
+
+@pytest.mark.task2_2
+def test_broadcast_index() -> None:
+    # Case where big_shape has extra dimension
+    big_index = np.array([3, 2, 1], dtype=np.int32)
+    big_shape = np.array([4, 3, 2], dtype=np.int32)
+    shape = np.array([3, 2], dtype=np.int32)
+    out_index = np.zeros_like(shape, dtype=np.int32)
+
+    minitorch.broadcast_index(big_index, big_shape, shape, out_index)
+    assert tuple(out_index) == (2, 1)
+
+    # Case where shape has only one dimension
+    big_index = np.array([1, 0, 2], dtype=np.int32)
+    big_shape = np.array([2, 1, 3], dtype=np.int32)
+    shape = np.array([3], dtype=np.int32)
+    out_index = np.zeros_like(shape, dtype=np.int32)
+
+    minitorch.broadcast_index(big_index, big_shape, shape, out_index)
+    assert tuple(out_index) == (2,)
+
+    # Case where shape has one broadcastable dimension
+    big_index = np.array([3, 2, 0], dtype=np.int32)
+    big_shape = np.array([5, 4, 1], dtype=np.int32)
+    shape = np.array([4, 1], dtype=np.int32)
+    out_index = np.zeros_like(shape, dtype=np.int32)
+
+    minitorch.broadcast_index(big_index, big_shape, shape, out_index)
+    assert tuple(out_index) == (2, 0)
+
+    # Complex case with multiple broadcastable dimensions
+    big_index = np.array([2, 0, 4, 3], dtype=np.int32)
+    big_shape = np.array([3, 1, 5, 6], dtype=np.int32)
+    shape = np.array([1, 5, 6], dtype=np.int32)
+    out_index = np.zeros_like(shape, dtype=np.int32)
+
+    minitorch.broadcast_index(big_index, big_shape, shape, out_index)
+    assert tuple(out_index) == (0, 4, 3)
 
 
 @given(tensor_data())
